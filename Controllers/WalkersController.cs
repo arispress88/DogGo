@@ -3,6 +3,8 @@ using DogGo.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using DogGo.Models.ViewModels;
+using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace DogGo.Controllers
 {
@@ -11,18 +13,40 @@ namespace DogGo.Controllers
     public class WalkersController : Controller
     {
         private readonly IWalkerRepository _walkerRepo;
-        private readonly IWalkRepository _walkRepo; 
+        private readonly IWalkRepository _walkRepo;
+        private readonly IOwnerRepository _ownerRepo;
 
     // ASP.NET will give us an instance of our Walker Repository. This is called "Dependency Injection"
-        public WalkersController(IWalkerRepository walkerRepository, IWalkRepository walkRepository)
+        public WalkersController(IWalkerRepository walkerRepository, IWalkRepository walkRepository, IOwnerRepository ownerRepo)
         {
             _walkerRepo = walkerRepository;
             _walkRepo = walkRepository;
+            _ownerRepo = ownerRepo;
         }
         // GET: WalkersController
         public ActionResult Index()
         {
-            List<Walker> walkers = _walkerRepo.GetAllWalkers();
+            int ownerId = GetCurrentUserId();
+            List<Walker> walkers;
+
+            if (ownerId != 0)
+            {
+                Owner owner = _ownerRepo.GetOwnerById(ownerId);
+                int? neighborhoodId = owner.NeighborhoodId;
+
+                if (neighborhoodId.HasValue)
+                {
+                    walkers = _walkerRepo.GetWalkersInNeighborhood(neighborhoodId.Value);
+                }
+                else
+                {
+                    walkers = _walkerRepo.GetWalkersInNeighborhood(neighborhoodId.Value);
+                }
+            }
+            else
+            {
+                walkers= _walkerRepo.GetAllWalkers();
+            }
             return View(walkers);
             
         }
@@ -110,6 +134,18 @@ namespace DogGo.Controllers
             {
                 return View();
             }
+        }
+
+        private int GetCurrentUserId()
+        {
+            string id = User?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(id))
+            {
+                return 0;
+            }
+            
+            return int.Parse(id);
         }
 
     }
