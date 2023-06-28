@@ -15,18 +15,21 @@ namespace DogGo.Controllers
         private readonly IDogRepository _dogRepo;
         private readonly IWalkerRepository _walkerRepo;
         private readonly INeighborhoodRepository _neighborhoodRepo;
+        private readonly IWalkRepository _walkRepo; 
 
 
         public OwnersController(
             IOwnerRepository ownerRepository,
             IDogRepository dogRepository,
             IWalkerRepository walkerRepository,
-            INeighborhoodRepository neighborhoodRepo)
+            INeighborhoodRepository neighborhoodRepo,
+            IWalkRepository walkRepo)
         {
             _ownerRepo = ownerRepository;
             _dogRepo = dogRepository;
             _walkerRepo = walkerRepository;
             _neighborhoodRepo = neighborhoodRepo;
+            _walkRepo = walkRepo;
         }
 
         // GET: OwnersController
@@ -41,7 +44,7 @@ namespace DogGo.Controllers
         public ActionResult Details(int id)
         {
             Owner owner = _ownerRepo.GetOwnerById(id);
-            List<Dog> dogs = _dogRepo.GetDogsByOwnerId(owner.Id);
+            List<Dog> dogs = _dogRepo.GetDogsByOwnerId(id);
             List<Walker> walkers = _walkerRepo.GetWalkersInNeighborhood(owner.NeighborhoodId);
 
             ProfileViewModel vm = new ProfileViewModel()

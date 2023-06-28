@@ -96,6 +96,14 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcV2Fsa2Vyc1xJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Arnold/workspace/MVC/DogGo/Views/Walks/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcV2Fsa3NcQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Arnold/workspace/MVC/DogGo/Views/Walks/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcV2Fsa3NcRGVsZXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Arnold/workspace/MVC/DogGo/Views/_ViewImports.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 

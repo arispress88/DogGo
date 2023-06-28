@@ -1,8 +1,6 @@
 ﻿using DogGo.Models;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
-using NuGet.Protocol.Plugins;
-using System.Collections.Generic;
+
 
 
 namespace DogGo.Repositories
@@ -112,22 +110,32 @@ namespace DogGo.Repositories
             }
         }
 
-        public void AddWalk(Walk walk)
+        public void AddWalk(Walk walk, List<int> SelectedDogIds)
         {
-            using (SqlConnection conn = Connection)
+            foreach (int dogId in SelectedDogIds)
             {
-                conn.Open();
-                using (SqlCommand cmd = conn.CreateCommand())
+                using (SqlConnection conn = Connection)
                 {
-                    cmd.CommandText = @"INSERT INTO Walks (Date, Duration, WalkerId, DogId)
-                                OUTPUT INSERTED.ID
-                                VALUES (@date, @duration, @walkerId, @dogId)";
-                    cmd.Parameters.AddWithValue("@date", walk.Date);
-                    cmd.Parameters.AddWithValue("@duration", walk.Duration);
-                    cmd.Parameters.AddWithValue("@walkerId", walk.WalkerId);
-                    cmd.Parameters.AddWithValue("@dogId", walk.DogId);
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
 
-                    walk.Id = (int)cmd.ExecuteScalar();
+                        cmd.CommandText = @"
+                        INSERT INTO Walks (Date, Duration, WalkerId, DogId, WalkStatusId)
+                        OUTPUT INSERTED.ID
+                        VALUES (@date, @duration, @walkerId, @dogId, @statusId);
+                    ";
+
+                        cmd.Parameters.AddWithValue("@date", walk.Date);
+                        cmd.Parameters.AddWithValue("@duration", walk.Duration);
+                        cmd.Parameters.AddWithValue("@walkerId", walk.WalkerId);
+                        cmd.Parameters.AddWithValue("@dogId", dogId);
+                        cmd.Parameters.AddWithValue("@statusId", walk.StatusId);
+
+                        int id = (int)cmd.ExecuteScalar();
+
+                        walk.Id = id;
+                    }
                 }
             }
         }
@@ -151,17 +159,25 @@ namespace DogGo.Repositories
             }
         }
 
-        public void DeleteWalk(int id)
+        public void DeleteWalk(List<int> SelectedWalkIds)
         {
-            using (SqlConnection conn = Connection)
+            foreach (int walkId in SelectedWalkIds)
             {
-                conn.Open();
-                using (SqlCommand cmd = conn.CreateCommand())
+                using (SqlConnection conn = Connection)
                 {
-                    cmd.CommandText = "DELETE FROM Walks WHERE Id = @id";
-                    cmd.Parameters.AddWithValue("@id", id);
+                    conn.Open();
 
-                    cmd.ExecuteNonQuery();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"
+                                DELETE FROM Walks
+                                WHERE Id = @walkId
+                            ";
+
+                        cmd.Parameters.AddWithValue("@walkId", walkId);
+
+                        cmd.ExecuteNonQuery();
+                    }
                 }
             }
         }
@@ -174,7 +190,7 @@ namespace DogGo.Repositories
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT w.Id, w.Date, w.Duration, w.WalkerId, w.DogId, o.Name AS OwnerName, d.Name AS DogName
+                    cmd.CommandText = @"SELECT w.Id, w.Date, w.Duration, w.WalkStatusId, w.DogId, o.Name AS OwnerName, d.Name AS DogName
                                 FROM Walks w
                                 INNER JOIN Dog d ON w.DogId = d.Id
                                 INNER JOIN Owner o ON d.OwnerId = o.Id
@@ -191,7 +207,7 @@ namespace DogGo.Repositories
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Date = reader.GetDateTime(reader.GetOrdinal("Date")),
                             Duration = reader.GetInt32(reader.GetOrdinal("Duration")),
-                            WalkerId = reader.GetInt32(reader.GetOrdinal("WalkerId")),
+                            StatusId = reader.GetInt32(reader.GetOrdinal("WalkStatusId")),
                             DogId = reader.GetInt32(reader.GetOrdinal("DogId")),
                             Dog = new Dog
                             {

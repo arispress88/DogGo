@@ -243,5 +243,88 @@ namespace DogGo.Repositories
                 }
             }
         }
+
+        public List<Walker> GetWalkersNearOwner(int ownerId)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                            SELECT w.Id, w.[Name], w.ImageUrl, w.NeighborhoodId, n.Name AS NeighborhoodName
+                            FROM Walker w
+                            LEFT JOIN Neighborhood n ON n.Id = w.NeighborhoodId
+                            WHERE w.NeighborhoodId = (SELECT o.NeighborhoodId FROM Owner o WHERE o.Id = @id)
+                        ";
+
+                    cmd.Parameters.AddWithValue("@id", ownerId);
+
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    List<Walker> walkers = new List<Walker>();
+                    while (reader.Read())
+                    {
+                        Walker walker = new Walker
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            ImageUrl = reader.GetString(reader.GetOrdinal("ImageUrl")),
+                            NeighborhoodId = reader.GetInt32(reader.GetOrdinal("NeighborhoodId")),
+                            Neighborhood = new Neighborhood()
+                            {
+                                Name = reader.GetString(reader.GetOrdinal("NeighborhoodName"))
+                            }
+                        };
+
+                        walkers.Add(walker);
+                    }
+
+                    reader.Close();
+
+                    return walkers;
+                }
+            }
+        }
+
+        public void CreateWalk(int ownerId, int walkerId, List<int> dogIds, DateTime dateTime)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    // Create a new walk with the requested status
+                    cmd.CommandText = @"
+                            INSERT INTO Walk (OwnerId, WalkerId, Date, Status)
+                            VALUES (@ownerId, @walkerId, @date, @status)
+                            SELECT SCOPE_IDENTITY()
+                        ";
+
+                    cmd.Parameters.AddWithValue("@ownerId", ownerId);
+                    cmd.Parameters.AddWithValue("@walkerId", walkerId);
+                    cmd.Parameters.AddWithValue("@date", dateTime);
+
+                    int walkId = Convert.ToInt32(cmd.ExecuteScalar());
+
+                    // Associate the selected dogs with the walk
+                    foreach (int dogId in dogIds)
+                    {
+                        cmd.Parameters.Clear();
+                        cmd.CommandText = @"
+                                INSERT INTO DogWalk (DogId, WalkId)
+                                VALUES (@dogId, @walkId)
+                            ";
+
+                        cmd.Parameters.AddWithValue("@dogId", dogId);
+                        cmd.Parameters.AddWithValue("@walkId", walkId);
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+        }
     }
 }
